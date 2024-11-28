@@ -13,7 +13,8 @@ from scipy.integrate import quad
     z0 - focus coordinate
     z - longitudinal coordinate
     trad - radiation duration
-
+    Wl - full energy of laser system
+    d - fraction of Wl fell on a narrow laser pulse
 """
 
 def f_tau(tau: float) -> float:
