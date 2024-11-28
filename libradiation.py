@@ -13,7 +13,8 @@ from scipy.integrate import quad
     z0 - focus coordinate
     z - longitudinal coordinate
     trad - radiation duration
-
+    Wl - full energy of laser system
+    d - fraction of Wl fell on a narrow laser pulse
 """
 
 def f_tau(tau: float) -> float:
@@ -88,3 +89,11 @@ def eta(a01: float, a02: float, tau: float, omega0: float, sigma01: float, N: fl
     # Math: \eta = \dfrac{\mathcal{P} \tau_{rad}}{\mathcal{W}_L}
     """
     return Power(a01, a02, tau, omega0, sigma01, N, z0, R, z1, z2) * trad / Wl
+
+def dnw(a0: float, tau: float, sigma0: float)-> float:
+    """
+    Level of nonlinearity in a wake
+    # Math: \delta n_{\Phi} = \Phi_0 \left(1 + \dfrac{8}{\sigma_0^2}\right)
+    """
+
+    return Phi0(a0, tau) * (1. + 8./(sigma0*sigma0))
