@@ -17,6 +17,39 @@ from scipy.integrate import quad
     d - fraction of Wl fell on a narrow laser pulse
 """
 
+#physical constants
+q = 4.8032 * 10**(-10)
+me = 9.1094 * 10**(-28)
+c = 3. * 10**(8)
+
+def wp(n: float)-> float:
+    """
+    Plasma frequency
+    # Math: \omega_p = \sqrt{\dfrac{4 \pi n q^2}{ m_e}}
+    """
+    return sqrt(4. * pi * n * q * q/ me)
+
+def Dimw0(l: float) -> float:
+    """
+    Dimension laser frequency
+    # Math: \omega_0 = \dfrac{2 \pi c}{\lambda}
+    """
+    return 2. *pi *c / l
+
+def Dimlessw0(l: float, n: float) -> float:
+    """
+    Dimensionless laser frequency
+    # Math: \omega_0/\omega_p
+    """
+    return Dimw0(l)/wp(n)
+
+def rad_freq(n: float) -> float:
+    """
+    Radiation frequency
+    # Math: \dfrac{2 \omega_p}{2 \pi}
+    """
+    return wp(n)/pi
+
 def f_tau(tau: float) -> float:
     """
     # Math: f_{\tau} = \dfrac{\sin(\tau)}{4 - 5 \tau^2/\pi^2+\tau^4/\pi^4}
