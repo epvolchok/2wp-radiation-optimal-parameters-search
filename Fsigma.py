@@ -9,10 +9,14 @@ from libradiation import *
 fig = plt.figure(figsize=(10, 6))
 gs = gridspec.GridSpec(1, 2)
 
-def eta_sigma(sigma01: float, N: float) -> float:
-    return Fsigma(sigma01, N, 0., 0., 1.)*Fsigma(sigma01, N, 0., 0., 1.)/((1. + N*N)*sigma01*sigma01)
+def eta_sigma(a01:float, a02:float, sigma01: float, N: float) -> float:
 
-eta_v = np.vectorize(eta_sigma)
+    en_sig = tau*a01*a01*sigma01*sigma01+tau*a02*a02*N*N*sigma01*sigma01
+    eta_sig= Phi0(a01, tau)*Phi0(a01, tau)*Phi0(a02, tau)*Phi0(a02, tau)*Fsigma(sigma01, N, 0., 0., 1.)*Fsigma(sigma01, N, 0., 0., 1.)/en_sig
+
+    return eta_sig
+
+Fsigma_v = np.vectorize(Fsigma)
 
 tau = 3.42
 
@@ -24,7 +28,7 @@ extent = [1., 3.5, 1., 5.]
 
 sigmas_mesh, ns_mesh = np.meshgrid(sigmas_v, ns)
 
-etas = eta_v(sigmas_mesh, ns_mesh)
+etas = Fsigma_v(sigmas_mesh, ns_mesh, 0., 0., 1.)
 
 init_a0 = 0.7
 init_s0 = 1.26
@@ -42,7 +46,7 @@ print(f'maximal params= {sigmas_v[args[1]], ns[args[0]]}')
 
 
 text_dn1 = plt.text(-3, 4.8, r'dn1 ='+str(dnw(init_a0, tau, init_s0)), horizontalalignment='left',verticalalignment='center')
-text_eta = plt.text(-3, 4.5, r'eta ='+str(eta_sigma(init_s0, init_N)), horizontalalignment='left',verticalalignment='center')
+text_eta = plt.text(-3, 4.5, r'eta ='+str(Fsigma(init_s0, init_N, 0., 0., 1.)), horizontalalignment='left',verticalalignment='center')
 
 ax_a0 = fig.add_axes([0.1, 0.5, 0.3, 0.05])
 a0_slider = Slider(
