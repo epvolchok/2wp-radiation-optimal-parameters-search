@@ -65,12 +65,17 @@ etas = np.array(etas) * 10**4
 ax_eta = plt.subplot(gs[0:4,0])
 ax_eta.plot(fs, etas)
 ax_eta.set_xlabel(r'Frequency, THz')
-ax_eta.set_ylabel(r'Efficiency, $\cdot 10^{-4}$')
+ax_eta.set_ylabel(r'Efficiency, $\times 10^{-4}$')
+
+ax_eta_twin = ax_eta.twiny()
+ax_eta_twin.set_xlim(density(fs[0]), density(fs[-1]))
+ax_eta_twin.set_xlabel(r'Density, cm$^{-3}$')
 
 def plot_func(ax, fs, *funcs):
-    for func in funcs:
-        ax.plot(fs, np.vectorize(func)(fs), label=func.__name__)
+    for func, label in funcs:
+        ax.plot(fs, np.vectorize(func)(fs), label=label)
     ax.legend()
+
 def Dimsigma1(f): return Dimsigma(sigma01, f) * 10**6 #mkm
 def Dimsigma2(f): return Dimsigma(sigma02, f) * 10**6 #mkm
 def Dimtau_f(f): return Dimtau(tau, f) * 10**(15) # fs
@@ -98,7 +103,7 @@ def frange(ax, f1, f2):
 
 
 ax_sigma = fig.add_subplot(gs2[0])
-plot_func(ax_sigma, fs, Dimsigma1, Dimsigma2)
+plot_func(ax_sigma, fs, (Dimsigma1, r'$\sigma_{01}$'), (Dimsigma2, r'$\sigma_{02}$'))
 ax_sigma.set_ylim(0., 200)
 ax_sigma.set_ylabel(r'Spot sizes, $\mu$m')
 frange(ax_sigma, f1, f2)
@@ -106,9 +111,11 @@ frange(ax_sigma, f1, f2)
 
 
 ax_sigma_twin = ax_sigma.twiny()
+ax_sigma_twin.set_xlim(density(fs[0]), density(fs[-1]))
+ax_sigma_twin.set_xlabel(r'Density, cm$^{-3}$')
 
 ax_energy = fig.add_subplot(gs2[1], sharex=ax_sigma)
-plot_func(ax_energy, fs, Wl1, Wl2, Wlsum)
+plot_func(ax_energy, fs, (Wl1, r'$\mathcal{W}_{l1}$'), (Wl2, r'$\mathcal{W}_{l2}$') , (Wlsum, r'$\mathcal{W}_{\Sigma l}$'))
 ax_energy.set_ylim(0., 5.)
 ax_energy.set_ylabel(r'Energy, J')
 frange(ax_energy, f1, f2)
@@ -117,8 +124,8 @@ frange(ax_energy, f1, f2)
 
 
 ax_tau = fig.add_subplot(gs2[2], sharex=ax_energy)
-plot_func(ax_tau, fs, Dimtau_f)
-ax_tau.set_ylim(0., 50)
+plot_func(ax_tau, fs, (Dimtau_f, r'$\tau$'))
+ax_tau.set_ylim(0., 100)
 ax_tau.set_ylabel(r'Laser duration, fs')
 frange(ax_tau, f1, f2)
 

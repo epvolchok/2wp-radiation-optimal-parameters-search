@@ -18,9 +18,9 @@ from scipy.integrate import quad
 """
 
 #physical constants
-q = 4.8032 * 10**(-10)
-me = 9.1094 * 10**(-28)
-c = 2.9979 * 10**(8)
+q = 4.8032 * 10**(-10) #st.q
+me = 9.1094 * 10**(-28) #gr
+c = 2.9979 * 10**(8) # m/s
 
 
 def density(f: float) -> float:
