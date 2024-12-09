@@ -25,6 +25,8 @@ fig = plt.figure(figsize=(15, 8))
 gs = gridspec.GridSpec(1, 2, width_ratios=[1., 1.])
 gs2 = gridspec.GridSpecFromSubplotSpec(3, 1, subplot_spec=gs[0, 1], hspace=0.1)
 fs = np.linspace(0.5, 100., 1000) # in THz
+den_v = np.vectorize(density)
+ns = den_v(fs)
 eta_v = np.vectorize(eta)
 R_v = np.vectorize(Rayleigh)
 
@@ -66,10 +68,13 @@ ax_eta = plt.subplot(gs[0:4,0])
 ax_eta.plot(fs, etas)
 ax_eta.set_xlabel(r'Frequency, THz')
 ax_eta.set_ylabel(r'Efficiency, $\times 10^{-4}$')
+ax_eta.set_xscale('log')
 
 ax_eta_twin = ax_eta.twiny()
-ax_eta_twin.set_xlim(density(fs[0]), density(fs[-1]))
+ax_eta_twin.plot(ns, etas)
+#ax_eta_twin.set_xlim(density(fs[0]), density(fs[-1]))
 ax_eta_twin.set_xlabel(r'Density, cm$^{-3}$')
+ax_eta_twin.set_xscale('log')
 
 def plot_func(ax, fs, *funcs):
     for func, label in funcs:
@@ -107,19 +112,22 @@ plot_func(ax_sigma, fs, (Dimsigma1, r'$\sigma_{01}$'), (Dimsigma2, r'$\sigma_{02
 ax_sigma.set_ylim(0., 200)
 ax_sigma.set_ylabel(r'Spot sizes, $\mu$m')
 frange(ax_sigma, f1, f2)
+ax_sigma.set_xscale('log')
 
 
 
 ax_sigma_twin = ax_sigma.twiny()
-ax_sigma_twin.set_xlim(density(fs[0]), density(fs[-1]))
+ax_sigma_twin.plot(ns, np.vectorize(Dimsigma1)(fs))
+#ax_sigma_twin.set_xlim(density(fs[0]), density(fs[-1]))
 ax_sigma_twin.set_xlabel(r'Density, cm$^{-3}$')
+ax_sigma_twin.set_xscale('log')
 
 ax_energy = fig.add_subplot(gs2[1], sharex=ax_sigma)
 plot_func(ax_energy, fs, (Wl1, r'$\mathcal{W}_{l1}$'), (Wl2, r'$\mathcal{W}_{l2}$') , (Wlsum, r'$\mathcal{W}_{\Sigma l}$'))
 ax_energy.set_ylim(0., 5.)
 ax_energy.set_ylabel(r'Energy, J')
 frange(ax_energy, f1, f2)
-
+ax_energy.set_xscale('log')
 
 
 
@@ -128,6 +136,7 @@ plot_func(ax_tau, fs, (Dimtau_f, r'$\tau$'))
 ax_tau.set_ylim(0., 100)
 ax_tau.set_ylabel(r'Laser duration, fs')
 frange(ax_tau, f1, f2)
+ax_tau.set_xscale('log')
 
 ax_tau.set_xlabel(r'Frequency, THz')
 
