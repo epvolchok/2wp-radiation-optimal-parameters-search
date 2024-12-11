@@ -63,12 +63,12 @@ def Dimtau(tau, f):
 def Dimsigma(sigma, f): 
     return sigma*c/wp(f)
 
-def Sigma0(tau: float, d: float, a0: float, l: float, f: float)-> float:
+def Sigma0(tau: float, d: float, a0: float, l: float, f: float, Wlsum, Wl0)-> float:
     """
     Laser spot size of a narrower laser pulse in dependence of summary energy a the laser system
     # Math: \sigma_{01}^2 = \dfrac{16 d Wl}{3 \pi \tau a_{01}^2}
     """
-    return sqrt(16. * d /(3. * pi * tau * a0 * a0 *Dimlessw0(l, f) * Dimlessw0(l, f)))
+    return sqrt(16. * d*Wlsum/Wl0 /(3. * pi * tau * a0 * a0 *Dimlessw0(l, f) * Dimlessw0(l, f)))
 
 def f_tau(tau: float) -> float:
     """
@@ -83,40 +83,40 @@ def Phi0(a0: float, tau: float) -> float:
     """
     return 0.75 * a0 * a0 * f_tau(tau)
 
-def Rayleigh(l: float, f: float,  tau: float,  d: float, a0: float) -> float:
+def Rayleigh(l: float, f: float,  tau: float,  d: float, a0: float,Wlsum, Wl0) -> float:
     """
     Rayleigh lenght
     # Math: \mathcal{R}=\omega_0 \sigma_0^2/2
     """
-    return 0.5 * Dimlessw0(l, f) * Sigma0(tau, d, a0, l, f) * Sigma0(tau, d, a0, l, f)
+    return 0.5 * Dimlessw0(l, f) * Sigma0(tau, d, a0, l, f, Wlsum, Wl0) * Sigma0(tau, d, a0, l, f, Wlsum, Wl0)
 
-def sigma(tau: float, d: float, a0: float, z: float, z0: float, l: float, f: float) -> float:
+def sigma(tau: float, d: float, a0: float, z: float, z0: float, l: float, f: float, Wlsum, Wl0) -> float:
     """
     Laser diffraction factor
     # Math: \sigma (z)=\sigma_0 \sqrt{1+(z-z_0)^2/\mathcal{R}^2}
     """
-    return Sigma0(tau, d, a0, l, f) * sqrt(1. + (z - z0) * (z - z0) / (Rayleigh(l, f,  tau,  d, a0) * Rayleigh(l, f,  tau,  d, a0)))
+    return Sigma0(tau, d, a0, l, f, Wlsum, Wl0) * sqrt(1. + (z - z0) * (z - z0) / (Rayleigh(l, f,  tau,  d, a0, Wlsum, Wl0) * Rayleigh(l, f,  tau,  d, a0, Wlsum, Wl0)))
 
-def sigmas(tau: float, d: float, a01: float, a02: float, l: float, f: float)->float:
-    sigma01 = Sigma0(tau, d, a01, l, f)
-    sigma02 = Sigma0(tau, 1.-d, a02, l, f)
+def sigmas(tau: float, d: float, a01: float, a02: float, l: float, f: float, Wlsum, Wl0)->float:
+    sigma01 = Sigma0(tau, d, a01, l, f, Wlsum, Wl0)
+    sigma02 = Sigma0(tau, 1.-d, a02, l, f, Wlsum, Wl0)
 
     return sigma01, sigma02
 
-def Fsigma(tau: float, d: float, a01: float, a02: float, l: float, f: float, z: float, z0: float) -> float:
+def Fsigma(tau: float, d: float, a01: float, a02: float, l: float, f: float, z: float, z0: float, Wlsum, Wl0) -> float:
     """
     # Math: \mathcal{F}_{\sigma}=\dfrac{\sigma_{01}^2 \sigma_{02}^2 \left|\sigma_2^2-\sigma_1^2\right|}{(\sigma_1^2+\sigma_2^2)^{2}} \exp\left[-\dfrac{3}{8} \frac{\sigma_1^2 \sigma_2^2}{\sigma_1^2+\sigma_2^2}\right]
     """
-    sigma01, sigma02 = sigmas(tau, d, a01, a02, l, f)
-    sigma1_2 = sigma(tau, d, a01, z, z0, l, f) * sigma(tau, d, a01, z, z0, l, f)
-    sigma2_2 = sigma(tau, 1.-d, a02, z, z0, l, f) * sigma(tau, 1.-d, a02, z, z0, l, f)
+    sigma01, sigma02 = sigmas(tau, d, a01, a02, l, f, Wlsum, Wl0)
+    sigma1_2 = sigma(tau, d, a01, z, z0, l, f, Wlsum, Wl0) * sigma(tau, d, a01, z, z0, l, f, Wlsum, Wl0)
+    sigma2_2 = sigma(tau, 1.-d, a02, z, z0, l, f, Wlsum, Wl0) * sigma(tau, 1.-d, a02, z, z0, l, f, Wlsum, Wl0)
     sig_sum = sigma1_2 + sigma2_2
     f1 = sigma01 * sigma01 * sigma02 * sigma02 * fabs(sigma2_2 - sigma1_2)/(sig_sum * sig_sum)
     f2 = exp(-3. * sigma1_2 * sigma2_2/ 8. /sig_sum)
     return f1*f2
 
 def E0(a01: float, a02: float, tau: float, l: float, f: float, d: float, \
-                                                        z: float, z0: float, R: float) -> float:
+                                                        z: float, z0: float, R: float, Wlsum, Wl0) -> float:
     """
     Radiation amplitude
     # Math: \mathcal{E}_0 = \dfrac{ 3 \Phi_{0,1} \Phi_{0, 2} \mathcal{F}_{\sigma}}{2\sqrt{(J_0+2\sqrt{3} R J_1)^2+16 R^2 J_0^2}}
@@ -126,36 +126,36 @@ def E0(a01: float, a02: float, tau: float, l: float, f: float, d: float, \
     divider = sqrt((j0(var) + 2.*sqrt(3.) * R*j1(var))*(j0(var) + 2.*sqrt(3.) * R*j1(var)) + \
                                                                 16. * R * R*j0(var) * j0(var))
     
-    return 1.5 * Phi0(a01, tau) * Phi0(a02, tau) * Fsigma(tau, d, a01, a02, l, f, z, z0) / divider
+    return 1.5 * Phi0(a01, tau) * Phi0(a02, tau) * Fsigma(tau, d, a01, a02, l, f, z, z0, Wlsum, Wl0) / divider
 
 
 def Power(a01: float, a02: float, tau: float, l: float, f: float, d: float, \
-                                            z0: float, R: float, z1: float, z2: float) -> float:
+                                            z0: float, R: float, z1: float, z2: float, Wlsum, Wl0) -> float:
     """
     Radiation power
     # Math: \mathcal{P} = \pi R \int_{z1}^{z2} \mathcal{E}_0^2 dz
     """
-    e_2 = lambda z: E0(a01, a02, tau, l, f, d, z, z0, R) * \
-                            E0(a01, a02, tau, l, f, d, z, z0, R)
+    e_2 = lambda z: E0(a01, a02, tau, l, f, d, z, z0, R, Wlsum, Wl0) * \
+                            E0(a01, a02, tau, l, f, d, z, z0, R, Wlsum, Wl0)
     
     return 0.69 * pi * R * quad(lambda z: e_2(z), z1, z2)[0]
 
 def eta(a01: float, a02: float, tau: float, l: float, f: float, d: float, \
-                    z0: float, R: float, z1: float, z2: float, trad: float, Wl: float) -> float:
+                    z0: float, R: float, z1: float, z2: float, trad: float, Wlsum, Wl0) -> float:
     """
     Radiation efficiency
     # Math: \eta = \dfrac{\mathcal{P} \tau_{rad}}{\mathcal{W}_L}
     """
-    return Power(a01, a02, tau, l, f, d, z0, R, z1, z2) * trad / Wl * 10**(9)
+    return Power(a01, a02, tau, l, f, d, z0, R, z1, z2, Wlsum, Wl0) * trad / Wlsum * 10**(9)
 
 
-def dnw(a0: float, tau: float, d: float, l: float, f: float)-> float:
+def dnw(a0: float, tau: float, d: float, l: float, f: float, Wlsum, Wl0)-> float:
     """
     Level of nonlinearity in a wake
     # Math: \delta n_{\Phi} = \Phi_0 \left(1 + \dfrac{8}{\sigma_0^2}\right)
     """
 
-    return Phi0(a0, tau) * (1. + 8./(Sigma0(tau, d, a0, l, f)*Sigma0(tau, d, a0, l, f)))
+    return Phi0(a0, tau) * (1. + 8./(Sigma0(tau, d, a0, l, f, Wlsum, Wl0)*Sigma0(tau, d, a0, l, f, Wlsum, Wl0)))
 
 def Wl0(f: float) -> float:
     return me * c**5 * 10**3 * density(f)/(wp(f) * wp(f) * wp(f))

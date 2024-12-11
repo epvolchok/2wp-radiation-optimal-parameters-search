@@ -1,0 +1,84 @@
+import matplotlib
+#matplotlib.use('Qt5Agg')   
+import matplotlib.pyplot as plt 
+import numpy as np
+from matplotlib.widgets import Button, Slider
+#import matplotlib as mpl
+from matplotlib import gridspec
+import multiprocessing as mp
+from sympy import symbols, Eq, nsolve
+from scipy.optimize import fsolve
+from scipy.integrate import quad
+from functools import partial
+
+from libradiation import *
+
+from matplotlib import rc 
+
+font = {'family' : 'serif'}
+rc('text', usetex=True)
+#rc('text.latex', unicode=True)
+rc('font', family='serif')
+rc('text.latex', preamble=r"\usepackage[utf8]{inputenc}")
+rc('text.latex', preamble=r"\usepackage[T1]{fontenc}")
+matplotlib.rcParams.update({'font.size': 14})
+
+a01 = 0.67
+a02 = 0.8
+sigma01 = 1.86
+N = 3.
+sigma02 = N * sigma01
+R = 12
+l = 800 * 10**(-9)
+tau = 3.48
+T = 40*10**(-15)
+n = 0.25*me/(pi*q*q)*(tau/T)*(tau/T)
+z0 = 0
+Wlsum = 0.35
+#d = 0.08
+print(n)
+frad = sqrt(4. *n *q*q/me/pi)*10**(-12)
+
+ds = np.linspace(0.03, 0.51, 100)
+
+def z1(f, d, a0): return 5. * Rayleigh(l, f, tau, d, a0, Wlsum, Wl0(f))
+def trad(f): return 100./wp(f)
+
+print(frad)
+print(z1(frad, 0.08, a01), Wl0(frad))
+
+def eta_d(d):
+    return eta(a01, a02, tau, l, frad, d, z0, R, -z1(frad, d, a01), z1(frad, d, a01), trad(frad), Wlsum, Wl0(frad))
+
+with mp.Pool(processes=5) as p:
+    etas = p.map(eta_d, ds)
+etas = np.array(etas) * 10**4
+
+print(np.max(etas), ds[np.argmax(etas)])
+
+fig = plt.figure(figsize=(8, 10))
+gs = gridspec.GridSpec(3, 1)
+ax_eta = plt.subplot(gs[0, 0])
+ax_eta.plot(ds, etas)
+
+ax_dn = plt.subplot(gs[1, 0])
+dnv = np.vectorize(dnw)
+dns1 = dnv(a01, tau, ds, l, frad, Wlsum, Wl0(frad))
+dns2 = dnv(a02, tau, ds, l, frad, Wlsum, Wl0(frad))
+
+ax_dn.plot(ds, dns1, label='1')
+ax_dn.plot(ds, dns2, label='2')
+
+ax_sigma = plt.subplot(gs[2,0])
+def Dimsigma1(d): return Dimsigma(Sigma0(tau, d, a01, l, frad, Wlsum, Wl0(frad) ), frad) * 10**6 #mkm
+def Dimsigma2(d): return Dimsigma(Sigma0(tau, 1.-d, a02, l, frad, Wlsum, Wl0(frad)), frad) * 10**6 #mkm
+
+ds1v = np.vectorize(Dimsigma1)
+ds1 = ds1v(ds)
+ds2v = np.vectorize(Dimsigma2)
+ds2 = ds2v(ds)
+
+ax_sigma.plot(ds, ds1, label='1')
+ax_sigma.plot(ds, ds2, label='2')
+
+plt.show()
