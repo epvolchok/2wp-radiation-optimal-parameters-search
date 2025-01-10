@@ -20,6 +20,7 @@ class EnergyDependence(RadProp):
         """
         Laser spot size of a narrower laser pulse in dependence of summary energy a the laser system
         # Math: \sigma_{01}^2 = \dfrac{16 d Wl}{3 \pi \tau a_{01}^2}
+        Wlsum is dimensionless.
         """
         return sqrt(16. * d*Wlsum /(3. * pi * self.tau * a0 * a0 * self.Dimlessw0(f) * self.Dimlessw0(f)))
     

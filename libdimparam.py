@@ -9,7 +9,7 @@ You may obtain a copy of the License at
 http://www.apache.org/licenses/LICENSE-2.0
 """
 from math import pi
-
+from libradiationproperties import RadiationProperties as RadProp
 """
 Dimension coefficinets and physical constants
 """
@@ -49,10 +49,12 @@ class DimensionVars():
         return sigma * c/wp * 10**6
 
     @staticmethod
-    def Wl0(n: float, wp: float) -> float:
+    def Wl0(f: float) -> float:
         """
         Dimension coefficient of energy
         # Math: \mathcal{W}_{L0} = n m_e c^2 \dfrac{c^3}{\omega_p^3} * 10^3
         returns J
         """
-        return me * c**5 * 10**3 * n/(wp * wp * wp)
+        n = RadProp.density(f)
+        wp_f = RadProp.wp(n)
+        return me * c**5 * 10**3 * n/(wp_f * wp_f * wp_f)
