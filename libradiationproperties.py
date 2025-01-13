@@ -70,8 +70,8 @@ class RadiationProperties():
         Dimensionless laser frequency
         # Math: \omega_0/\omega_p
         """
-        n = RadiationProperties().density(f)
-        return DimensionVars.Dimw0(self.l)/RadiationProperties().wp(n)
+        n = self.density(f)
+        return DimensionVars.Dimw0(self.l)/self.wp(n)
     
 
     def Wl(self, sigma0: float, a0: float, f: float) -> float:
