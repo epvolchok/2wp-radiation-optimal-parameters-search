@@ -13,6 +13,7 @@ from functools import partial
 
 from libradenergy import EnergyDependence as radiation
 from libdimparam import *
+import libplot
 
 from matplotlib import rc 
 
@@ -94,29 +95,31 @@ def eta_fs(rad, a01, a02, d, Wl, fs, npr=5):
     etas = np.array(etas) * 10**4    
     return etas
 
-def Dimsigma1(rad, d, a0, Wl, f): 
+def Dimsigma(f, rad, d, a0, Wl): 
 
     n = radiation.density(f)
     wp_n = radiation.wp(n)
     sigma0 = rad.Sigma0(d, a0, f, Wlsum(Wl, f))
     return DimensionVars().Dimsigma(sigma0, wp_n) #mkm
 
-def dnw_en(rad, d, a0, Wl, f):
+def dnw_en(f, rad, d, a0, Wl):
     sigma0 = rad.Sigma0(d, a0, f, Wlsum(Wl, f))
     return rad.dnw(sigma0, a0)
 
-def axis_labels(ax, ys, fs, ns, labels, ylabel):
-    for i, y in enumerate(ys):
-        line = ax.plot(fs, y, label=labels[i])
-    ax.legend()
-    ax.set_xlabel(r'Frequency, THz')
-    ax.set_ylabel(ylabel)
-    ax.set_xscale('log')
-    
-    ax_twin = ax.twiny()
-    ax_twin.plot(ns, ys[-1], color=line[0].get_color())
-    ax_twin.set_xlabel(r'Density, cm$^{-3}$')
-    ax_twin.set_xscale('log')
+def vectorization(func, fs, *args):
+    func_v = np.vectorize(func)
+    res=np.empty(len(fs))
+    if args:
+        res = func_v(fs, *args)
+    else: res = func_v(fs)
+    return res
+
+def reset(event, *args):
+    if args:
+        for obj in args:
+            obj.reset()
+
+
 
 def main():
 
@@ -133,8 +136,9 @@ def main():
 
     fs = np.linspace(0.5, 100., 200) # in THz
     ds = np.linspace(0.01, 0.5, 10)  #np.arange(0.1, 0.51, 0.1)
-    n_v = np.vectorize(radiation.density)
-    ns = n_v(fs)
+    
+    
+    ns = vectorization(radiation.density, fs)
     etas = np.random.rand(len(fs))
 
 
@@ -144,27 +148,49 @@ def main():
     ax_eta = plt.subplot(gs[0:2,0])
     #ax_eta.plot(fs, etas, label='d= 0.08')
     #axis_labels(ax_eta, r'Efficiency, $\times 10^{-4}$', fs[0], fs[-1])
-    axis_labels(ax_eta, [etas], fs, ns, [r'$d='+str(init_d)+r'$'], r'Efficiency, $\times 10^{-4}$')
+    libplot.plot(ax_eta, [etas], fs, ns, [r'$d='+str(init_d)+r'$'], r'Efficiency, $\times 10^{-4}$')
 
-    sigma_v = np.vectorize(Dimsigma1)
-    sigmas1 = sigma_v(rad, init_d, init_a01, Wl, fs)
-    sigmas2 = sigma_v(rad, 1. - init_d, init_a02, Wl, fs)
+    
+    sigmas1 = vectorization(Dimsigma, fs, rad, init_d, init_a01, Wl)
+    sigmas2 = vectorization(Dimsigma, fs, rad, 1. - init_d, init_a02, Wl)
+    
     ax_sigmas = plt.subplot(gs[1,1])
-    #ax_sigmas.plot(fs, sigmas1, label=r'$\sigma_{01}$')
-    axis_labels(ax_sigmas, [sigmas1, sigmas2], fs, ns, [r'$\sigma_{01}$', r'$\sigma_{02}$'], r'Laser spot-sizes, $\mu m$')
+    libplot.plot(ax_sigmas, [sigmas1, sigmas2], fs, ns, [r'$\sigma_{01}$', r'$\sigma_{02}$'], \
+                 r'Laser spot-sizes, $\mu$ m', bottom=False)
 
-    dn_v = np.vectorize(dnw_en)
-    dns1 = dn_v(rad, init_d, init_a01, Wl, fs)
-    dns2 = dn_v(rad, 1. - init_d, init_a02, Wl, fs)
+    dns1 = vectorization(dnw_en, fs, rad, init_d, init_a01, Wl)
+    dns2 = vectorization(dnw_en, fs, rad, 1. - init_d, init_a02, Wl)
+
     ax_dn = plt.subplot(gs[2, 1])
-    axis_labels(ax_dn, [dns1, dns2], fs, ns, [r'$\delta n_{w1}$', r'$\delta n_{w2}$'], r'Level of nonlinearity in waves')
-    ax_dn.set_ylim(0., 5.)
-    
-    for ax in (ax_sigmas, ax_dn):
-        ax.label_outer()
-    
+    libplot.plot(ax_dn, [dns1, dns2], fs, ns, [r'$\delta n_{w1}$', r'$\delta n_{w2}$'], \
+                r'Level of nonlinearity', top=False)
+    ax_dn.set_ylim(0., 5.5)
 
+    ax_a1 = fig.add_axes([0.05, 0.2, 0.3, 0.05])
+    a1_slider = Slider(
+    ax=ax_a1,
+    label=r'$a_{01}$',
+    valmin=0.2,
+    valmax=0.85,
+    valinit=init_a01,
+    valstep=0.01,
+    )
 
+    ax_a2 = fig.add_axes([0.05, 0.15, 0.3, 0.05])
+    a2_slider = Slider(
+    ax=ax_a2,
+    label=r'$a_{02}$',
+    valmin=0.2,
+    valmax=0.85,
+    valinit=init_a02,
+    valstep=0.01,
+    )
+
+    resetax = fig.add_axes([0.1, 0.1, 0.1, 0.04])
+    button = Button(resetax, 'Reset', hovercolor='0.975')
+    button.on_clicked(reset)
+
+    fig.tight_layout()
     plt.show()
 
     return 0
