@@ -10,6 +10,7 @@ http://www.apache.org/licenses/LICENSE-2.0
 """
 from libradiationproperties import RadiationProperties as RadProp
 from math import sqrt, pi
+from libdimparam import *
 
 class EnergyDependence(RadProp):
 
@@ -23,6 +24,15 @@ class EnergyDependence(RadProp):
         Wlsum is dimensionless.
         """
         return sqrt(16. * d*Wlsum /(3. * pi * self.tau * a0 * a0 * self.Dimlessw0(f) * self.Dimlessw0(f)))
+    
+    def Dimsigma(self, f: float, d: float, a0: float, Wl: float) -> float: 
+        """
+        Dimension sigma, mkm
+        """
+        n = RadProp.density(f)
+        wp_n = RadProp.wp(n)
+        sigma0 = self.Sigma0(d, a0, f, RadProp.Wlsum(Wl, f))
+        return DimensionVars().Dimsigma(sigma0, wp_n)
     
     def Rayleigh(self, f: float,  d: float, a0: float, Wlsum: float) -> float:
         """
@@ -41,6 +51,10 @@ class EnergyDependence(RadProp):
         sigma0 = self.Sigma0(d, a0, f, Wlsum)
         
         return super().Wl(sigma0, a0, f)
+    
+    def dnw_en(self, f, d, a0, Wl):
+        sigma0 = self.Sigma0(d, a0, f, RadProp.Wlsum(Wl, f))
+        return super().dnw(sigma0, a0)
     
     def sigma(self,  d: float, a0: float, z: float, f: float, Wlsum: float) -> float:
         """

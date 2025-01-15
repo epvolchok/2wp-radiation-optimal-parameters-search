@@ -62,25 +62,39 @@ class RadiationProperties():
         Radiation frequency, Hz
         # Math: \dfrac{2 \omega_p}{2 \pi}
         """
-        n = RadiationProperties().density(f)
-        return RadiationProperties().wp(n)/pi
+        n = RadiationProperties.density(f)
+        return RadiationProperties.wp(n)/pi
+    
+    @staticmethod
+    def trad(f):
+        """
+        Radiation time, in sec.
+        """
+        n = RadiationProperties.density(f)
+        return 100./RadiationProperties.wp(n)
     
     def Dimlessw0(self, f: float ) -> float:
         """
         Dimensionless laser frequency
         # Math: \omega_0/\omega_p
         """
-        n = self.density(f)
-        return DimensionVars.Dimw0(self.l)/self.wp(n)
+        n = RadiationProperties.density(f)
+        return DimensionVars.Dimw0(self.l)/RadiationProperties.wp(n)
     
-
     def Wl(self, sigma0: float, a0: float, f: float) -> float:
         """
-        Energy of a laser pulse, J
+        Dimension energy of a laser pulse, J
         # Math: \mathcal{W}_L = \dfrac{ 3 \pi}{16} \tau a_{0}^2 \sigma_0^2 \omega_0^2
         """
         return 3. * pi/ 16. * self.tau * a0 * a0 * sigma0 * sigma0 * \
                                 self.Dimlessw0(f) * self.Dimlessw0(f) * DimensionVars().Wl0(f)
+    @staticmethod
+    def Wlsum(Wl: float, f: float)-> float:
+        """
+        Dimensionless laser energy
+        """
+        n = RadiationProperties.density(f)
+        return Wl/DimensionVars.Wl0(n)
     
     def Phi0(self, a0: float) -> float:
         """
@@ -155,6 +169,12 @@ class RadiationProperties():
                                 self.E0(sigma01, sigma02, a01, a02, f, z)
         
         return 0.69 * pi * self.R * quad(lambda z: e_2(z), z1, z2)[0]
+    
+    def z1(self, f: float, d: float, a0: float, Wl: float) -> float:
+        """
+        Integration limits
+        """
+        return 5. * self.Rayleigh(f, d, a0, RadiationProperties().Wlsum(Wl, f))
     
     def eta(self, sigma01: float, sigma02: float, a01: float, a02: float, f: float, \
                                             z1: float, z2: float, trad: float, Wlsum) -> float:

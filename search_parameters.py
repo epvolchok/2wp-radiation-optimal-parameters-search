@@ -11,6 +11,7 @@ from scipy.optimize import fsolve
 from scipy.integrate import quad
 from functools import partial
 
+
 from libradenergy import EnergyDependence as radiation
 from libdimparam import *
 import libplot
@@ -51,42 +52,12 @@ def update(val):
 a0_slider.on_changed(update)
 s0_slider.on_changed(update)
 N_slider.on_changed(update)
-
-resetax = fig.add_axes([0.1, 0.1, 0.1, 0.04])
-button = Button(resetax, 'Reset', hovercolor='0.975')
-
-def reset(event):
-    a0_slider.reset()
-    s0_slider.reset()
-    N_slider.reset()
-button.on_clicked(reset)
-
-ax_s0 = fig.add_axes([0.1, 0.4, 0.3, 0.05])
-s0_slider = Slider(
-    ax=ax_s0,
-    label='s0',
-    valmin=1.2,
-    valmax=3.,
-    valinit=init_s0,
-    valstep=0.01,
-)
 """
 
 #a few more additional functions
 
-# dimensionless laser energy
-def Wlsum(Wl, f): 
-    n = radiation.density(f)
-    return Wl/DimensionVars().Wl0(n)
-# limits for integration
-def z1(rad, f, d, a0): return 5. * rad.Rayleigh(f, d, a0, Wlsum(f))
-# duration of radiation, based on numerical simulations
-def trad(f):
-    n = radiation.density(f)
-    return 100./radiation.wp(n)
-
 def eta_f(rad, d, a01, a02, Wl, f):
-    return rad.eta(d, a01, a02, f, -z1(rad, f, d, a01), z1(rad, f, d, a01), trad(f), Wlsum(Wl, f))
+    return rad.eta(d, a01, a02, f, -rad.z1(f, d, a01), rad.z1(f, d, a01), radiation.trad(f), radiation.Wlsum(Wl, f))
 
 def eta_fs(rad, a01, a02, d, Wl, fs, npr=5):
     partial_eta_f = partial(eta_f, rad, d, a01, a02, Wl)
@@ -94,31 +65,6 @@ def eta_fs(rad, a01, a02, d, Wl, fs, npr=5):
         etas = p.map(partial_eta_f, fs)
     etas = np.array(etas) * 10**4    
     return etas
-
-def Dimsigma(f, rad, d, a0, Wl): 
-
-    n = radiation.density(f)
-    wp_n = radiation.wp(n)
-    sigma0 = rad.Sigma0(d, a0, f, Wlsum(Wl, f))
-    return DimensionVars().Dimsigma(sigma0, wp_n) #mkm
-
-def dnw_en(f, rad, d, a0, Wl):
-    sigma0 = rad.Sigma0(d, a0, f, Wlsum(Wl, f))
-    return rad.dnw(sigma0, a0)
-
-def vectorization(func, fs, *args):
-    func_v = np.vectorize(func)
-    res=np.empty(len(fs))
-    if args:
-        res = func_v(fs, *args)
-    else: res = func_v(fs)
-    return res
-
-def reset(event, *args):
-    if args:
-        for obj in args:
-            obj.reset()
-
 
 
 def main():
@@ -138,11 +84,12 @@ def main():
     ds = np.linspace(0.01, 0.5, 10)  #np.arange(0.1, 0.51, 0.1)
     
     
-    ns = vectorization(radiation.density, fs)
+    ns = libplot.vectorization(radiation.density, fs)
     etas = np.random.rand(len(fs))
 
 
     init_d = 0.08
+    init_f = 28.
     #etas = eta_fs(rad, init_a01, init_a02, init_d, Wl, fs, npr=5)
 
     ax_eta = plt.subplot(gs[0:2,0])
@@ -151,15 +98,15 @@ def main():
     libplot.plot(ax_eta, [etas], fs, ns, [r'$d='+str(init_d)+r'$'], r'Efficiency, $\times 10^{-4}$')
 
     
-    sigmas1 = vectorization(Dimsigma, fs, rad, init_d, init_a01, Wl)
-    sigmas2 = vectorization(Dimsigma, fs, rad, 1. - init_d, init_a02, Wl)
+    sigmas1 = libplot.vectorization(rad.Dimsigma, fs, init_d, init_a01, Wl)
+    sigmas2 = libplot.vectorization(rad.Dimsigma, fs, 1. - init_d, init_a02, Wl)
     
     ax_sigmas = plt.subplot(gs[1,1])
     libplot.plot(ax_sigmas, [sigmas1, sigmas2], fs, ns, [r'$\sigma_{01}$', r'$\sigma_{02}$'], \
                  r'Laser spot-sizes, $\mu$ m', bottom=False)
 
-    dns1 = vectorization(dnw_en, fs, rad, init_d, init_a01, Wl)
-    dns2 = vectorization(dnw_en, fs, rad, 1. - init_d, init_a02, Wl)
+    dns1 = libplot.vectorization(rad.dnw_en, fs, init_d, init_a01, Wl)
+    dns2 = libplot.vectorization(rad.dnw_en, fs, 1. - init_d, init_a02, Wl)
 
     ax_dn = plt.subplot(gs[2, 1])
     libplot.plot(ax_dn, [dns1, dns2], fs, ns, [r'$\delta n_{w1}$', r'$\delta n_{w2}$'], \
@@ -167,28 +114,29 @@ def main():
     ax_dn.set_ylim(0., 5.5)
 
     ax_a1 = fig.add_axes([0.05, 0.2, 0.3, 0.05])
-    a1_slider = Slider(
-    ax=ax_a1,
-    label=r'$a_{01}$',
-    valmin=0.2,
-    valmax=0.85,
-    valinit=init_a01,
-    valstep=0.01,
-    )
-
     ax_a2 = fig.add_axes([0.05, 0.15, 0.3, 0.05])
-    a2_slider = Slider(
-    ax=ax_a2,
-    label=r'$a_{02}$',
-    valmin=0.2,
-    valmax=0.85,
-    valinit=init_a02,
-    valstep=0.01,
-    )
+    
+    sliders_param = [(r'$a_{01}$', ax_a1, init_a01), (r'$a_{02}$', ax_a2, init_a02)]
+    a1_slider, a2_slider = libplot.create_sliders(*sliders_param)
 
     resetax = fig.add_axes([0.1, 0.1, 0.1, 0.04])
     button = Button(resetax, 'Reset', hovercolor='0.975')
-    button.on_clicked(reset)
+    button.on_clicked(libplot.reset_wrapper(a1_slider, a2_slider))
+    plt.connect('button_press_event', libplot.on_click)
+
+    text_d = plt.text(-3, 4.8, r'$d ='+str(init_d)+r'$', horizontalalignment='left',verticalalignment='center')
+    text_f = plt.text(-3, 4.8, r'$f ='+str(init_f)+r'$', horizontalalignment='left',verticalalignment='center')
+    params = [init_d, init_a01, init_a02, init_f, -rad.z1(init_f, init_d, init_a01), \
+                rad.z1(init_f, init_d, init_a01), radiation.trad(init_f), \
+                radiation.Wlsum(Wl, init_f)]
+    text_eta = plt.text(-3, 4.5, r'$\eta ='+str(rad.eta(*params)) + r'\cdot 10^{-4}$', \
+                        horizontalalignment='left',verticalalignment='center')
+    text_P = plt.text(-3, 4.5, r'Power ='+str(rad.Power(*params[:-3]))+r'$ GW', \
+                        horizontalalignment='left',verticalalignment='center')
+    maxE0 = rad.E0(init_d, init_a01, init_a02, init_f, 0, radiation.Wlsum(Wl, init_f))
+    text_E0 = plt.text(-3, 4.5, r'Max $E_0 ='+str()+r'$ MV/cm', \
+                        horizontalalignment='left',verticalalignment='center')
+    
 
     fig.tight_layout()
     plt.show()
