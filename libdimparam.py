@@ -18,6 +18,7 @@ Dimension coefficinets and physical constants
 q = 4.8032 * 10**(-10) #st.q
 me = 9.1094 * 10**(-28) #gr
 c = 2.9979 * 10**(8) # m/s
+electron_ch = 1.6 * 10**(-19) # coulomb
 
 class DimensionVars():
 
@@ -31,7 +32,7 @@ class DimensionVars():
         return 2. *pi *c / l
     
     @staticmethod
-    def Dimtau(tau, wp):
+    def Dimtau(tau: float, wp: float) -> float:
         """
         Dimension laser duration
         # Math: \tau_{dim} = \tau \omega_p^{-1}
@@ -40,7 +41,7 @@ class DimensionVars():
         return tau/wp
 
     @staticmethod
-    def Dimsigma(sigma, wp): 
+    def Dimsigma(sigma: float, wp: float) -> float: 
         """
         Dimension laser spot-size
         # Math: \sigma \dfrac{c}{\omega_p}
@@ -58,3 +59,8 @@ class DimensionVars():
         
         wp_n = sqrt(4. * pi * n * q *q/ me)
         return me * c**5 * 10**3 * n/(wp_n * wp_n * wp_n)
+    
+    @staticmethod
+    def DimE0(E0:float, wp: float) -> float:
+
+        return E0 * me * c * wp/ electron_ch * 10**(-11)

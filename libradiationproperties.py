@@ -174,7 +174,7 @@ class RadiationProperties():
         """
         Integration limits
         """
-        return 5. * self.Rayleigh(f, d, a0, RadiationProperties().Wlsum(Wl, f))
+        return 5. * self.Rayleigh(f, d, a0, RadiationProperties.Wlsum(Wl, f))
     
     def eta(self, sigma01: float, sigma02: float, a01: float, a02: float, f: float, \
                                             z1: float, z2: float, trad: float, Wlsum) -> float:

@@ -2,5 +2,7 @@
 __pycache__/
 *.py[cod]
 
-
+*.pdf
+*.svg
+*.png
 eff_

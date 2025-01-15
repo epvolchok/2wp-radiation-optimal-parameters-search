@@ -10,6 +10,7 @@ from sympy import symbols, Eq, nsolve
 from scipy.optimize import fsolve
 from scipy.integrate import quad
 from functools import partial
+from matplotlib.patches import Rectangle
 
 
 from libradenergy import EnergyDependence as radiation
@@ -124,18 +125,20 @@ def main():
     button.on_clicked(libplot.reset_wrapper(a1_slider, a2_slider))
     plt.connect('button_press_event', libplot.on_click)
 
-    text_d = plt.text(-3, 4.8, r'$d ='+str(init_d)+r'$', horizontalalignment='left',verticalalignment='center')
-    text_f = plt.text(-3, 4.8, r'$f ='+str(init_f)+r'$', horizontalalignment='left',verticalalignment='center')
-    params = [init_d, init_a01, init_a02, init_f, -rad.z1(init_f, init_d, init_a01), \
-                rad.z1(init_f, init_d, init_a01), radiation.trad(init_f), \
-                radiation.Wlsum(Wl, init_f)]
-    text_eta = plt.text(-3, 4.5, r'$\eta ='+str(rad.eta(*params)) + r'\cdot 10^{-4}$', \
-                        horizontalalignment='left',verticalalignment='center')
-    text_P = plt.text(-3, 4.5, r'Power ='+str(rad.Power(*params[:-3]))+r'$ GW', \
-                        horizontalalignment='left',verticalalignment='center')
-    maxE0 = rad.E0(init_d, init_a01, init_a02, init_f, 0, radiation.Wlsum(Wl, init_f))
-    text_E0 = plt.text(-3, 4.5, r'Max $E_0 ='+str()+r'$ MV/cm', \
-                        horizontalalignment='left',verticalalignment='center')
+
+
+    text_d = plt.figtext(0.65, 0.91, fr'$d = {init_d:.2f}$', horizontalalignment='left',verticalalignment='center', fontsize=16)
+    text_f = plt.figtext(0.73, 0.91, fr'$f ={init_f:.2f}$ THz', horizontalalignment='left',verticalalignment='center', fontsize=16)
+    params = [init_d, init_a01, init_a02, init_f, -rad.z1(init_f, init_d, init_a01, Wl), \
+                rad.z1(init_f, init_d, init_a01, Wl), Wl, radiation.trad(init_f)]
+    fig.patches.extend(plt.Rectangle((0.6, 0.75), 0.35, 0.2, color='gray', fill=True, alpha=0.5))
+    text_eta = plt.figtext(0.68, 0.87, fr'$\eta = {rad.eta(*params)*10**4: .2f}$'+r'$ \cdot 10^{-4}$', \
+                        horizontalalignment='left',verticalalignment='center', fontsize=16)
+    text_P = plt.figtext(0.68, 0.83, fr'Power $= {rad.Power(*params[:-1]):.2f}$ GW', \
+                        horizontalalignment='left',verticalalignment='center', fontsize=16)
+    maxE0 = rad.DimE0(init_d, init_a01, init_a02, init_f, 0, radiation.Wlsum(Wl, init_f))
+    text_E0 = plt.figtext(0.68, 0.79, fr'Max $E_0 = {maxE0:.2f} $ MV/cm', \
+                        horizontalalignment='left',verticalalignment='center', fontsize=16)
     
 
     fig.tight_layout()

@@ -16,6 +16,7 @@ class EnergyDependence(RadProp):
 
     def __init__(self, R: float, l: float, tau:float, z0: float):
         super().__init__(R, l, tau, z0)
+        self.obj = RadProp(self.R, self.l, self.tau, self.z0)
 
     def Sigma0(self, d: float, a0: float, f: float, Wlsum: float)-> float:
         """
@@ -61,7 +62,7 @@ class EnergyDependence(RadProp):
         Laser diffraction factor
         # Math: \sigma (z)=\sigma_0 \sqrt{1+(z-z_0)^2/\mathcal{R}^2}
         """
-        return super().sigma(self.Sigma0(d, a0, f, Wlsum), z, f)
+        return self.obj.sigma(self.Sigma0(d, a0, f, Wlsum), z, f)
     
     def sigmas(self, d: float, a01: float, a02: float, f: float, Wlsum: float)->float:
         """
@@ -75,7 +76,7 @@ class EnergyDependence(RadProp):
        
         sigma01, sigma02 = self.sigmas(d, a01, a02, f, Wlsum)
         
-        return super().Fsigma(sigma01, sigma02, f, z)
+        return self.obj.Fsigma(sigma01, sigma02, f, z)
 
 
     def E0(self, d: float, a01: float, a02: float, f: float, z: float, Wlsum: float) -> float:
@@ -83,22 +84,35 @@ class EnergyDependence(RadProp):
         Radiation amplitude
         """
         sigma01, sigma02 = self.sigmas(d, a01, a02, f, Wlsum)
-        return super().E0(sigma01, sigma02, a01, a02, f, z)
+        return self.obj.E0(sigma01, sigma02, a01, a02, f, z)
+    
+    def DimE0(self, d: float, a01: float, a02: float, f: float, z: float, Wlsum: float) -> float:
+        """
+        Dimension radiation amplitude
+        """
+        n = RadProp.density(f)
+        wp_n = RadProp.wp(n)
+        return DimensionVars().DimE0(self.E0(d, a01, a02, f, z, Wlsum), wp_n)
     
     def Power(self, d: float, a01: float, a02: float, f: float, \
-                                                    z1: float, z2: float, Wlsum: float) -> float:
+                                                    z1: float, z2: float, Wl: float) -> float:
         """
         Radiation power in GW
         # Math: \mathcal{P} = \pi R \int_{z1}^{z2} \mathcal{E}_0^2 dz
         """
+        Wlsum = RadProp.Wlsum(Wl, f)
         sigma01, sigma02 = self.sigmas(d, a01, a02, f, Wlsum)
 
-        return super().Power(sigma01, sigma02, a01, a02, f, z1, z2)
+        return self.obj.Power(sigma01, sigma02, a01, a02, f, z1, z2)
     
     def eta(self, d: float, a01: float, a02: float, f: float, \
-                                        z1: float, z2: float, trad: float, Wlsum: float) -> float:
+                                        z1: float, z2: float, Wl: float, trad: float) -> float:
         """
         Radiation efficiency
         # Math: \eta = \dfrac{\mathcal{P} \tau_{rad}}{\mathcal{W}_L}
         """
-        return self.Power(d, a01, a02, f, z1, z2, Wlsum) * trad / Wlsum * 10**(9)
+
+        P = self.Power(d, a01, a02, f, z1, z2, Wl)
+
+        eff = P * trad / Wl * 10**(9)
+        return eff
