@@ -16,6 +16,7 @@ from matplotlib.patches import Rectangle
 from libradenergy import EnergyDependence as radiation
 from libdimparam import *
 import libplot
+from libPlot import Plotter
 
 from matplotlib import rc 
 
@@ -82,69 +83,34 @@ def main():
     init_d = 0.08
     init_f = 28.
 
+    params = [init_a01, init_a02, init_d, init_f, rad, Wl]
+
     fs = np.linspace(0.5, 100., 200) # in THz
     ds = np.linspace(0.01, 0.5, 10)  #np.arange(0.1, 0.51, 0.1)
     
-    ns = libplot.vectorization(radiation.density, fs)
+    ns = Plotter.vectorization(radiation.density, fs)
     etas = np.random.rand(len(fs))
 
+    graphs = Plotter(fig, gs, rad, params)
+    graphs.plot('eta', [etas], fs, ns, [r'$d='+str(init_d)+r'$'], params[0:2])
 
+    sigmas1 = Plotter.vectorization(rad.Dimsigma, fs, init_d, init_a01, Wl)
+    sigmas2 = Plotter.vectorization(rad.Dimsigma, fs, 1. - init_d, init_a02, Wl)
+    graphs.plot('sigma', [sigmas1, sigmas2], fs, ns, [r'$\sigma_{01}$', r'$\sigma_{02}$'])
 
-    #etas = eta_fs(rad, init_a01, init_a02, init_d, Wl, fs, npr=5)
+    dns1 = Plotter.vectorization(rad.dnw_en, fs, init_d, init_a01, Wl)
+    dns2 = Plotter.vectorization(rad.dnw_en, fs, 1. - init_d, init_a02, Wl)
+    graphs.plot('dn', [dns1, dns2], fs, ns, [r'$\delta n_{w1}$', r'$\delta n_{w2}$'])
+    graphs.ax_dn.set_ylim(0., 5.5)
 
-    ax_eta = plt.subplot(gs[0:2,0])
-    #ax_eta.plot(fs, etas, label='d= 0.08')
-    #axis_labels(ax_eta, r'Efficiency, $\times 10^{-4}$', fs[0], fs[-1])
-    libplot.plot(ax_eta, [etas], fs, ns, [r'$d='+str(init_d)+r'$'], r'Efficiency, $\times 10^{-4}$')
-    ax_eta.set_title('eta')
+    a1_slider, a2_slider = graphs.sliders(params[0:2])
 
-    
-    sigmas1 = libplot.vectorization(rad.Dimsigma, fs, init_d, init_a01, Wl)
-    sigmas2 = libplot.vectorization(rad.Dimsigma, fs, 1. - init_d, init_a02, Wl)
-    ax_sigmas = plt.subplot(gs[1,1])
-    libplot.plot(ax_sigmas, [sigmas1, sigmas2], fs, ns, [r'$\sigma_{01}$', r'$\sigma_{02}$'], \
-                 r'Laser spot-sizes, $\mu$ m', bottom=False)
-
-    dns1 = libplot.vectorization(rad.dnw_en, fs, init_d, init_a01, Wl)
-    dns2 = libplot.vectorization(rad.dnw_en, fs, 1. - init_d, init_a02, Wl)
-    ax_dn = plt.subplot(gs[2, 1])
-    libplot.plot(ax_dn, [dns1, dns2], fs, ns, [r'$\delta n_{w1}$', r'$\delta n_{w2}$'], \
-                r'Level of nonlinearity', top=False)
-    ax_dn.set_ylim(0., 5.5)
-
-    ax_a1 = fig.add_axes([0.05, 0.2, 0.3, 0.05])
-    ax_a2 = fig.add_axes([0.05, 0.15, 0.3, 0.05])
-    
-    sliders_param = [(r'$a_{01}$', ax_a1, init_a01), (r'$a_{02}$', ax_a2, init_a02)]
-    a1_slider, a2_slider = libplot.create_sliders(*sliders_param)
-
-    resetax = fig.add_axes([0.1, 0.1, 0.1, 0.04])
-    button = Button(resetax, 'Reset', hovercolor='0.975')
-    button.on_clicked(libplot.reset_wrapper(a1_slider, a2_slider))
-    
-
-    params = [init_d, init_a01, init_a02, init_f, -rad.z1(init_f, init_d, init_a01, Wl), \
-                rad.z1(init_f, init_d, init_a01, Wl), Wl, radiation.trad(init_f)]
-    maxE0 = rad.DimE0(init_d, init_a01, init_a02, init_f, 0, radiation.Wlsum(Wl, init_f))
-    text = r'''
-    $d = {:.2f} \qquad f ={:.2f}$ THz \\
-    $\eta = {:.2f} \cdot 10^{{-4}}$ \\
-    Power $= {:.2f}$ GW \\
-    Max $E_0 = {:.2f}$ MV/cm
-    '''.format(init_d, init_f, rad.eta(*params)*10**4, rad.Power(*params[:-1]), maxE0)
-
-    text_fig = plt.figtext(0.75, 0.83, text, \
-                        horizontalalignment='center',verticalalignment='center', fontsize=16, \
-                            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
-    
     for slider in (a1_slider, a2_slider):
-        slider.on_changed(libplot.update_wrapper(fig, text_fig, init_d, init_f, a1_slider, a2_slider, rad, Wl))
-    
-    on_click = libplot.onclick_wrapper(ax_eta, fig, text_fig, init_d, init_f, a1_slider, a2_slider, rad, Wl)
-    fig.canvas.mpl_connect('button_press_event', on_click)
+            slider.on_changed(graphs.update_wrapper(rad, a1_slider, a2_slider, params[2:]))
 
-    fig.tight_layout()
-    plt.show()
+    graphs.button.on_clicked(graphs.reset_wrapper(rad, a1_slider, a2_slider, params[2:]))
+    
+    graphs.plot_show()
 
     return 0
 
