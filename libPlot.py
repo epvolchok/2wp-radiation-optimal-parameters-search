@@ -21,7 +21,7 @@ class Plotter():
         self.ax_sigmas = plt.subplot(gs[1,1])
         self.ax_dn = plt.subplot(gs[2, 1])
 
-        self.lines = []
+        self.lines = {}
 
         self.ax_a1 = self.figure.add_axes([0.05, 0.2, 0.3, 0.05])
         self.ax_a2 = self.figure.add_axes([0.05, 0.15, 0.3, 0.05])
@@ -59,14 +59,15 @@ class Plotter():
         lines = []
         for i, y in enumerate(ys):
             line = ax.plot(fs, y, label=labels[i])
-            lines.append(line)
+            lines.append(line[0])
+
 
         ax.legend()
         ax.set_ylabel(ylabel)
         ax.set_xscale('log')
         
         ax_twin = ax.twiny()
-        ax_twin.plot(ns, ys[-1], color=line[0].get_color())
+        ax_twin.plot(ns, ys[-1], visible=False) #color=line[0].get_color()
         ax_twin.set_xscale('log')
 
         if top:
@@ -104,19 +105,16 @@ class Plotter():
     def plot(self, name, ys, fs, ns, labels, params=[]):
         
         if 'eta' in name:
-            print('eta')
-            self.lines += Plotter.plot_func(self.ax_eta, ys, fs, ns, labels, \
+            self.lines['eta'] = Plotter.plot_func(self.ax_eta, ys, fs, ns, labels, \
                                             r'Efficiency, $\times 10^{-4}$')
-            point = self.ax_eta.scatter([params[0]], [params[1]], marker='o', color='red')
-            self.lines.append(point)
+            self.lines['point'] = self.ax_eta.scatter([params[0]], [params[1]], marker='o', color='red')
         elif 'sigma' in name:
-            self.lines += Plotter.plot_func(self.ax_sigmas, ys, fs, ns, labels, \
-                                            r'Laser spot-sizes, $\mu$ m', bottom=False)
-        elif 'dn' in name:
-            self.lines += Plotter.plot_func(self.ax_dn, ys, fs, ns, labels, \
-                                            r'Level of nonlinearity', top=False)
             
-        print(self.lines)
+            self.lines['sigma1'], self.lines['sigma2'] = Plotter.plot_func(self.ax_sigmas, \
+                                ys, fs, ns, labels, r'Laser spot-sizes, $\mu$ m', bottom=False)
+        elif 'dn' in name:
+            self.lines['dn1'], self.lines['dn2'] = Plotter.plot_func(self.ax_dn, ys, fs, ns, labels, \
+                                            r'Level of nonlinearity', top=False)
             
     def sliders(self, params):
         init_a01, init_a02= params
@@ -125,13 +123,27 @@ class Plotter():
         return a1_slider, a2_slider
         
         
-    def update_wrapper(self, rad, a1_slider, a2_slider, params):
+    def update_wrapper(self, a1_slider, a2_slider, params, fs):
         def update(val):
-            #point.set_offsets(np.array([[s0_slider.val, N_slider.val]]))
-            
-            updated_text = Plotter.create_text(rad, [a1_slider.val, a2_slider.val]+params)
-
+            rad = params[-2]
+            d = self.lines['point'].get_offsets()[0][0]
+            Wl = params[-1]
+            a01 = a1_slider.val
+            a02 = a2_slider.val
+            updated_text = Plotter.create_text(rad, [a01, a02]+params)
             self.text_fig.set_text(updated_text)
+            
+            sigmas1 = Plotter.vectorization(rad.Dimsigma, fs, d, a01, Wl)
+            self.lines['sigma1'].set_ydata(sigmas1)
+            sigmas2 = Plotter.vectorization(rad.Dimsigma, fs, 1. - d, a02, Wl)
+            self.lines['sigma2'].set_ydata(sigmas2)
+
+            dns1 = Plotter.vectorization(rad.dnw_en, fs, d, a01, Wl)
+            self.lines['dn1'].set_ydata(dns1)
+            dns2 = Plotter.vectorization(rad.dnw_en, fs, 1. - d, a02, Wl)
+            self.lines['dn2'].set_ydata(dns2)
+
+
             self.figure.canvas.draw_idle()
         return update
     
@@ -140,14 +152,33 @@ class Plotter():
         def reset(event):
             slider1.reset()
             slider2.reset()
-            updated_text = Plotter.create_text(rad, [slider1.val, slider2.val]+params)
-            self.text_fig.set_text(updated_text)
         return reset
     
-    def onclick_wrapper(self, params):
+    def onclick_wrapper(self, a1_slider, a2_slider, params, fs):
         def on_click(event):
             if event.inaxes is self.ax_eta:
+                print('event')
+                print(id(event.inaxes), id(self.ax_eta))
                 f, d = event.xdata, event.ydata
+                rad = params[-2]
+                Wl = params[-1]
+                a01 = a1_slider.val
+                a02 = a2_slider.val
+                self.lines['point'].set_offsets(np.array([[f, d]]))
+                updated_text = Plotter.create_text(rad, [a01, a02]+params)
+                self.text_fig.set_text(updated_text)
+                
+                sigmas1 = Plotter.vectorization(rad.Dimsigma, fs, d, a01, Wl)
+                self.lines['sigma1'].set_ydata(sigmas1)
+                sigmas2 = Plotter.vectorization(rad.Dimsigma, fs, 1. - d, a02, Wl)
+                self.lines['sigma2'].set_ydata(sigmas2)
+
+                dns1 = Plotter.vectorization(rad.dnw_en, fs, d, a01, Wl)
+                self.lines['dn1'].set_ydata(dns1)
+                dns2 = Plotter.vectorization(rad.dnw_en, fs, 1. - d, a02, Wl)
+                self.lines['dn2'].set_ydata(dns2)
+                self.figure.canvas.draw_idle()
+
 
             print(event.xdata, event.ydata)
         return on_click

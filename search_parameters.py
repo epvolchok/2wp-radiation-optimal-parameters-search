@@ -106,10 +106,10 @@ def main():
     a1_slider, a2_slider = graphs.sliders(params[0:2])
 
     for slider in (a1_slider, a2_slider):
-            slider.on_changed(graphs.update_wrapper(rad, a1_slider, a2_slider, params[2:]))
+            slider.on_changed(graphs.update_wrapper(a1_slider, a2_slider, params[2:], fs))
 
     graphs.button.on_clicked(graphs.reset_wrapper(rad, a1_slider, a2_slider, params[2:]))
-    
+    fig.canvas.mpl_connect('button_press_event', graphs.onclick_wrapper(a1_slider, a2_slider, params[2:], fs))
     graphs.plot_show()
 
     return 0
