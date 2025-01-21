@@ -11,6 +11,9 @@ http://www.apache.org/licenses/LICENSE-2.0
 from libradiationproperties import RadiationProperties as RadProp
 from math import sqrt, pi
 from libdimparam import *
+import multiprocessing as mp
+from functools import partial
+import numpy as np
 
 class EnergyDependence(RadProp):
 
@@ -116,3 +119,20 @@ class EnergyDependence(RadProp):
 
         eff = P * trad / Wl * 10**(9)
         return eff
+    
+    def eta_f(self, d, a01, a02, Wl, f):
+        return self.eta(d, a01, a02, f, -self.z1(f, d, a01, Wl), \
+                   self.z1(f, d, a01, Wl), Wl, RadProp.trad(f))
+
+    def eta_fs(self, a01, a02, d, Wl, fs, npr=5):
+        partial_eta_f = partial(self.eta_f, d, a01, a02, Wl)
+        with mp.Pool(processes=npr) as p:
+            etas = p.map(partial_eta_f, fs)
+        etas = np.array(etas) * 10**4    
+        return etas
+    
+    def eta_2d(self, a01, a02, ds, Wl, fs, npr=5):
+        etas = np.empty((len(ds), len(fs)))
+        for id_, d in enumerate(ds):
+            etas[id_] = self.eta_fs(a01, a02, d, Wl, fs, npr)
+        return etas
