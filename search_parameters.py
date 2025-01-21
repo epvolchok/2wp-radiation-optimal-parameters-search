@@ -1,21 +1,23 @@
+"""
+Copyright (c) 2025 VOLCHOK Evgeniia
+for contacts e.p.volchok@gmail.com
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+"""
+
 import matplotlib
 matplotlib.use('Qt5Agg')   
 import matplotlib.pyplot as plt 
 import numpy as np
-from matplotlib.widgets import Button, Slider
-#import matplotlib as mpl
 from matplotlib import gridspec
-import multiprocessing as mp
-from sympy import symbols, Eq, nsolve
-from scipy.optimize import fsolve
-from scipy.integrate import quad
-from functools import partial
-from matplotlib.patches import Rectangle
 
 
 from libradenergy import EnergyDependence as radiation
 from libdimparam import *
-import libplot
 from libPlot import Plotter
 
 from matplotlib import rc 
@@ -25,17 +27,6 @@ rc('text', usetex=True)
 rc('font', family='serif')
 rc('text.latex', preamble=r"\usepackage[utf8]{inputenc}")
 matplotlib.rcParams.update({'font.size': 14})
-
-"""
-sigmas_mesh, ns_mesh = np.meshgrid(sigmas_v, ns)
-ax_F.imshow(etas, cmap='bwr', origin='lower', extent=extent) #, extent=extent
-point = ax_F.scatter([init_s0], [init_N], marker='o', color='black')
-#ax.contour(sigmas_v, ns, etas, extent=extent)
-
-#np.unravel_index(np.argmax(Fsigmas, axis=None), Fsigmas.shape)
-args = np.unravel_index(np.argmax(etas), etas.shape)
-"""
-
 
 def main():
 
