@@ -1,0 +1,8 @@
+# bite-code and system files
+__pycache__/
+*.py[cod]
+
+*.pdf
+*.svg
+*.png
+eff_
