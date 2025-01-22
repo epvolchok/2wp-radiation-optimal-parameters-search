@@ -6,9 +6,9 @@ Radiation is the result of nonlinear interaction of counterpropagating plasma wa
 plasma, purely potential Langmuir waves are excited by these drivers.
 Scattering of the first potential wave (which perturbs the longitudinal velocity $\delta v_{1x}$ ) on the density modulation
 $\delta n_2$ produced by the second wave (and vice versa) results in forced oscillations of the longitudinal electric current $\mathcal{J} \propto \delta n_2 \delta v_{1x} + \delta n_1 \delta v_{2x}$ at the doubled plasma frequency
-$$
-(k_1, \omega_p) + (- k_2, \omega_p) \rightarrow (k_1 - k_2, 2 \omega_p).
-$$
+
+$$(k_1, \omega_p) + (- k_2, \omega_p) \rightarrow (k_1 - k_2, 2 \omega_p).$$
+
 
 To know more about the mechanism follow:
 - [**Generation of high-field narrowband terahertz radiation by counterpropagating plasma wakefields**](https://doi.org/10.1063/1.4993100)
@@ -23,7 +23,7 @@ Files:
 - `search_parameters.py` - an example of use
 
 <figure>
-   <img src="Figure.png" alt="" width="1200" height="400"/> 
+   <img src="Figure.png" alt="" width="1200" height="550"/> 
    <figcaption>Output of the script</figcaption> 
    </figure>
 
