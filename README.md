@@ -23,7 +23,7 @@ Files:
 - `search_parameters.py` - an example of use
 
 <figure>
-   <img src="Figure.png" alt="" width="1200" height="550"/> 
+   <img src="Figure.png" alt="" width="1200" height="400"/> 
    <figcaption>Output of the script</figcaption> 
    </figure>
 
